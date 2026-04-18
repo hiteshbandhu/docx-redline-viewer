@@ -88,12 +88,119 @@ const tablesBody = `
       </w:tr>
     </w:tbl>`
 
+// --- with-explicit-pagebreak.docx ---
+// Page break via w:br w:type="page" inside a run
+const explicitPageBreakBody = `
+    <w:p>
+      <w:r><w:t>Page 1 content</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:br w:type="page"/></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:t>Page 2 content</w:t></w:r>
+    </w:p>`
+
+// --- with-pagebreakbefore.docx ---
+// Page break via w:pageBreakBefore on a paragraph
+const pageBreakBeforeBody = `
+    <w:p>
+      <w:r><w:t>Page 1 content</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:pPr><w:pageBreakBefore/></w:pPr>
+      <w:r><w:t>Page 2 content</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:t>Still page 2</w:t></w:r>
+    </w:p>`
+
+// --- with-multiple-pagebreaks.docx ---
+// Three pages via two explicit page breaks
+const multiplePageBreaksBody = `
+    <w:p>
+      <w:r><w:t>Page 1</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:br w:type="page"/></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:t>Page 2</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:pPr><w:pageBreakBefore/></w:pPr>
+      <w:r><w:t>Page 3</w:t></w:r>
+    </w:p>`
+
+// --- with-consecutive-pagebreaks.docx ---
+// Edge case: two back-to-back page breaks (empty middle page should be filtered)
+const consecutivePageBreaksBody = `
+    <w:p>
+      <w:r><w:t>Page 1</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:br w:type="page"/></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:br w:type="page"/></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:t>Page 2</w:t></w:r>
+    </w:p>`
+
+// --- with-pagebreak-at-start.docx ---
+// Edge case: first paragraph has pageBreakBefore — should not create empty first page
+const pageBreakAtStartBody = `
+    <w:p>
+      <w:pPr><w:pageBreakBefore/></w:pPr>
+      <w:r><w:t>Only page</w:t></w:r>
+    </w:p>`
+
+// --- with-pagebreak-at-end.docx ---
+// Edge case: last element is a page break — trailing empty page is dropped
+const pageBreakAtEndBody = `
+    <w:p>
+      <w:r><w:t>Only page</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:br w:type="page"/></w:r>
+    </w:p>`
+
+// --- with-mixed-inline-pagebreak.docx ---
+// Edge case: page break mid-paragraph (content before and after break in same paragraph)
+const mixedInlinePageBreakBody = `
+    <w:p>
+      <w:r><w:t xml:space="preserve">Before break </w:t></w:r>
+      <w:r><w:br w:type="page"/></w:r>
+      <w:r><w:t>After break</w:t></w:r>
+    </w:p>`
+
 mkdirSync('fixtures', { recursive: true })
 
 writeFileSync('fixtures/basic.docx', makeZip(makeDocx(basicBody)))
 writeFileSync('fixtures/with-redlines.docx', makeZip(makeDocx(redlinesBody)))
 writeFileSync('fixtures/with-tables.docx', makeZip(makeDocx(tablesBody)))
+writeFileSync('fixtures/with-explicit-pagebreak.docx', makeZip(makeDocx(explicitPageBreakBody)))
+writeFileSync('fixtures/with-pagebreakbefore.docx', makeZip(makeDocx(pageBreakBeforeBody)))
+writeFileSync('fixtures/with-multiple-pagebreaks.docx', makeZip(makeDocx(multiplePageBreaksBody)))
+writeFileSync(
+  'fixtures/with-consecutive-pagebreaks.docx',
+  makeZip(makeDocx(consecutivePageBreaksBody)),
+)
+writeFileSync('fixtures/with-pagebreak-at-start.docx', makeZip(makeDocx(pageBreakAtStartBody)))
+writeFileSync('fixtures/with-pagebreak-at-end.docx', makeZip(makeDocx(pageBreakAtEndBody)))
+writeFileSync(
+  'fixtures/with-mixed-inline-pagebreak.docx',
+  makeZip(makeDocx(mixedInlinePageBreakBody)),
+)
 
 console.log('✓ fixtures/basic.docx')
 console.log('✓ fixtures/with-redlines.docx')
 console.log('✓ fixtures/with-tables.docx')
+console.log('✓ fixtures/with-explicit-pagebreak.docx')
+console.log('✓ fixtures/with-pagebreakbefore.docx')
+console.log('✓ fixtures/with-multiple-pagebreaks.docx')
+console.log('✓ fixtures/with-consecutive-pagebreaks.docx')
+console.log('✓ fixtures/with-pagebreak-at-start.docx')
+console.log('✓ fixtures/with-pagebreak-at-end.docx')
+console.log('✓ fixtures/with-mixed-inline-pagebreak.docx')

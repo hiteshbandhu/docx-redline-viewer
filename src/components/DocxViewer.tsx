@@ -8,8 +8,9 @@ import {
   useState,
 } from 'react'
 import { parseDocx } from '../parser'
-import type { ASTNode, DocxAST, DocxStyles, NumberingMap } from '../parser/types'
+import type { DocxAST, DocxStyles, NumberingMap } from '../parser/types'
 import { renderAST } from '../renderer'
+import { splitIntoPages } from '../utils'
 
 export type DocxViewerProps = {
   src: string | ArrayBuffer | File
@@ -105,21 +106,6 @@ function btnStyle(disabled: boolean): CSSProperties {
     fontSize: '14px',
     lineHeight: 1,
   }
-}
-
-function splitIntoPages(nodes: ASTNode[]): ASTNode[][] {
-  const pages: ASTNode[][] = []
-  let current: ASTNode[] = []
-  for (const node of nodes) {
-    if (node.type === 'page-break') {
-      pages.push(current)
-      current = []
-    } else {
-      current.push(node)
-    }
-  }
-  pages.push(current)
-  return pages.filter((p) => p.length > 0)
 }
 
 function DocxViewerInner({

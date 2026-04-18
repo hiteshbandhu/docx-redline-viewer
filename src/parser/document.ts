@@ -35,10 +35,18 @@ export function parseDocument(xml: string, ctx: ParseContext): ASTNode[] {
     if (localName === 'p') {
       const para = parseParagraph(child, ctx)
       if (para.pageBreakBefore) nodes.push(pageBreak)
-      nodes.push(para)
-      if (para.runs.some((r) => (r as RunNode & { _pageBreak?: boolean })._pageBreak)) {
-        nodes.push(pageBreak)
+
+      type MarkedRun = RunNode & { _pageBreak?: boolean }
+      const hasInlineBreak = para.runs.some((r) => (r as MarkedRun)._pageBreak)
+      // Strip _pageBreak sentinel runs — they are signals, not renderable content
+      const cleanRuns = para.runs.filter((r) => !(r as MarkedRun)._pageBreak)
+
+      // Skip paragraph nodes that exist solely as a page-break carrier (no visible content)
+      if (cleanRuns.length > 0 || !hasInlineBreak) {
+        nodes.push({ ...para, runs: cleanRuns })
       }
+
+      if (hasInlineBreak) nodes.push(pageBreak)
     } else if (localName === 'tbl') {
       nodes.push(parseTable(child, ctx))
     }
