@@ -2,7 +2,7 @@ import { parseDocument } from './document'
 import { parseNumbering } from './numbering'
 import { parseRelationships } from './relationships'
 import { parseStyles } from './styles'
-import type { DocxAST } from './types'
+import type { DocxAST, NumberingMap } from './types'
 import { getText, unzipDocx } from './unzip'
 
 export type { DocxAST } from './types'
@@ -18,7 +18,12 @@ export type {
   TableRow,
 } from './types'
 
-export async function parseDocx(src: string | ArrayBuffer | File): Promise<DocxAST> {
+export type ParseResult = {
+  ast: DocxAST
+  numbering: NumberingMap
+}
+
+export async function parseDocx(src: string | ArrayBuffer | File): Promise<ParseResult> {
   const files = await unzipDocx(src)
 
   const documentXml = getText(files, 'word/document.xml')
@@ -34,5 +39,5 @@ export async function parseDocx(src: string | ArrayBuffer | File): Promise<DocxA
 
   const body = parseDocument(documentXml, { styles, numbering, rels, files })
 
-  return { body }
+  return { ast: { body }, numbering }
 }
