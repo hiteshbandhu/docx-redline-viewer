@@ -59,8 +59,17 @@ function parseParagraph(el: Element, ctx: ParseContext): ParagraphNode {
     const tag = localTag(child)
 
     if (tag === 'r') {
-      const run = parseRun(child, ctx)
-      if (run) runs.push(run)
+      // w:drawing is nested inside w:r in real Word documents
+      const drawingEl = findChild(child, 'drawing')
+      if (drawingEl) {
+        const imageRun = parseDrawing(drawingEl, ctx)
+        if (imageRun) {
+          runs.push({ type: 'run', text: '', _image: imageRun } as RunNode & { _image: ImageNode })
+        }
+      } else {
+        const run = parseRun(child, ctx)
+        if (run) runs.push(run)
+      }
     } else if (tag === 'hyperlink') {
       const rId = child.getAttribute('r:id')
       const url = rId ? ctx.rels[rId] : undefined
@@ -174,8 +183,12 @@ function parseTable(el: Element, ctx: ParseContext): TableNode {
 }
 
 function parseDrawing(el: Element, ctx: ParseContext): ImageNode | null {
-  const blip = el.querySelector('a\\:blip, blip')
-  const rEmbed = blip?.getAttribute('r:embed')
+  // Walk all descendants to find blip — namespace prefixes vary across Word versions
+  const blip = findDescendantByLocalName(el, 'blip')
+  const rEmbed = blip?.getAttributeNS(
+    'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+    'embed',
+  ) ?? blip?.getAttribute('r:embed')
   if (!rEmbed) return null
 
   const target = ctx.rels[rEmbed]
@@ -210,6 +223,22 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 function localTag(el: Element): string {
   return el.localName.replace(/^w:/, '')
+}
+
+function findChild(el: Element, localName: string): Element | null {
+  for (const child of el.children) {
+    if (child.localName === localName || child.localName === `w:${localName}`) return child
+  }
+  return null
+}
+
+function findDescendantByLocalName(el: Element, localName: string): Element | null {
+  for (const child of el.children) {
+    if (child.localName === localName) return child
+    const found = findDescendantByLocalName(child, localName)
+    if (found) return found
+  }
+  return null
 }
 
 function normalizeAlignment(val: string | undefined | null): ParagraphNode['alignment'] {
