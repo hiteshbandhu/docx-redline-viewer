@@ -14,18 +14,39 @@ type ParagraphProps = {
 }
 
 const HEADING_STYLES = new Set([
-  'Heading1', 'Heading2', 'Heading3', 'Heading4', 'Heading5', 'Heading6',
-  'heading1', 'heading2', 'heading3', 'heading4', 'heading5', 'heading6',
-  '1', '2', '3', '4', '5', '6',
+  'Heading1',
+  'Heading2',
+  'Heading3',
+  'Heading4',
+  'Heading5',
+  'Heading6',
+  'heading1',
+  'heading2',
+  'heading3',
+  'heading4',
+  'heading5',
+  'heading6',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
 ])
 
 const HEADING_TAG_MAP: Record<string, keyof JSX.IntrinsicElements> = {
-  Heading1: 'h1', heading1: 'h1',
-  Heading2: 'h2', heading2: 'h2',
-  Heading3: 'h3', heading3: 'h3',
-  Heading4: 'h4', heading4: 'h4',
-  Heading5: 'h5', heading5: 'h5',
-  Heading6: 'h6', heading6: 'h6',
+  Heading1: 'h1',
+  heading1: 'h1',
+  Heading2: 'h2',
+  heading2: 'h2',
+  Heading3: 'h3',
+  heading3: 'h3',
+  Heading4: 'h4',
+  heading4: 'h4',
+  Heading5: 'h5',
+  heading5: 'h5',
+  Heading6: 'h6',
+  heading6: 'h6',
 }
 
 const HEADING_STYLES_MAP: Record<string, CSSProperties> = {
@@ -37,7 +58,14 @@ const HEADING_STYLES_MAP: Record<string, CSSProperties> = {
   h6: { fontSize: '0.75em', fontWeight: 'bold', margin: '1.67em 0' },
 }
 
-export function Paragraph({ node, showRedlines, numbering, insertClassName, deleteClassName, counters }: ParagraphProps) {
+export function Paragraph({
+  node,
+  showRedlines,
+  numbering,
+  insertClassName,
+  deleteClassName,
+  counters,
+}: ParagraphProps) {
   const style: CSSProperties = {}
   if (node.alignment) style.textAlign = node.alignment
 
@@ -63,11 +91,7 @@ export function Paragraph({ node, showRedlines, numbering, insertClassName, dele
     return <Tag style={headingStyle}>{content}</Tag>
   }
 
-  return (
-    <p style={{ margin: '0.5em 0', lineHeight: 1.5, ...style }}>
-      {content}
-    </p>
-  )
+  return <p style={{ margin: '0.5em 0', lineHeight: 1.5, ...style }}>{content}</p>
 }
 
 function renderListItem(
@@ -85,7 +109,15 @@ function renderListItem(
 
   if (isBullet) {
     return (
-      <div style={{ display: 'flex', gap: '0.5em', paddingLeft: `${indent}em`, margin: '0.25em 0', ...style }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5em',
+          paddingLeft: `${indent}em`,
+          margin: '0.25em 0',
+          ...style,
+        }}
+      >
         <span style={{ minWidth: '1em' }}>•</span>
         <span style={{ flex: 1 }}>{content}</span>
       </div>
@@ -99,7 +131,15 @@ function renderListItem(
   const num = current + 1
 
   return (
-    <div style={{ display: 'flex', gap: '0.5em', paddingLeft: `${indent}em`, margin: '0.25em 0', ...style }}>
+    <div
+      style={{
+        display: 'flex',
+        gap: '0.5em',
+        paddingLeft: `${indent}em`,
+        margin: '0.25em 0',
+        ...style,
+      }}
+    >
       <span style={{ minWidth: '1.5em' }}>{num}.</span>
       <span style={{ flex: 1 }}>{content}</span>
     </div>

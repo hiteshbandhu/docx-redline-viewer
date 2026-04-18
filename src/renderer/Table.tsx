@@ -10,7 +10,14 @@ type TableProps = {
   counters: Map<string, number[]>
 }
 
-export function Table({ node, showRedlines, numbering, insertClassName, deleteClassName, counters }: TableProps) {
+export function Table({
+  node,
+  showRedlines,
+  numbering,
+  insertClassName,
+  deleteClassName,
+  counters,
+}: TableProps) {
   return (
     <table
       style={{

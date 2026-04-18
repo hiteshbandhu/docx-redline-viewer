@@ -103,7 +103,9 @@ function parseRun(el: Element, _ctx: ParseContext): RunNode | null {
   const strike = !!rPr?.querySelector('w\\:strike, strike')
 
   const szEl = rPr?.querySelector('w\\:sz, sz')
-  const fontSize = szEl ? Math.round(Number.parseInt(szEl.getAttribute('w:val') ?? '0', 10) / 2) : undefined
+  const fontSize = szEl
+    ? Math.round(Number.parseInt(szEl.getAttribute('w:val') ?? '0', 10) / 2)
+    : undefined
 
   const colorEl = rPr?.querySelector('w\\:color, color')
   const colorVal = colorEl?.getAttribute('w:val')
@@ -129,7 +131,9 @@ function parseDelRun(el: Element, _ctx: ParseContext): RunNode | null {
   const bold = !!rPr?.querySelector('w\\:b, b')
   const italic = !!rPr?.querySelector('w\\:i, i')
   const szEl = rPr?.querySelector('w\\:sz, sz')
-  const fontSize = szEl ? Math.round(Number.parseInt(szEl.getAttribute('w:val') ?? '0', 10) / 2) : undefined
+  const fontSize = szEl
+    ? Math.round(Number.parseInt(szEl.getAttribute('w:val') ?? '0', 10) / 2)
+    : undefined
   const colorEl = rPr?.querySelector('w\\:color, color')
   const colorVal = colorEl?.getAttribute('w:val')
   const color = colorVal && colorVal !== 'auto' ? `#${colorVal}` : undefined

@@ -1,4 +1,12 @@
-import { Component, type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
+import {
+  type CSSProperties,
+  Component,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { parseDocx } from '../parser'
 import type { DocxAST, NumberingMap } from '../parser/types'
 import { renderAST } from '../renderer'
@@ -20,7 +28,7 @@ type ViewerState =
   | { status: 'success'; ast: DocxAST; numbering: NumberingMap }
   | { status: 'error'; error: Error }
 
-const PAGE_WIDTH_PX = 816  // ~8.5in at 96dpi
+const PAGE_WIDTH_PX = 816 // ~8.5in at 96dpi
 const PAGE_PADDING_PX = 96 // ~1in margins
 const MIN_ZOOM = 0.5
 const MAX_ZOOM = 2
@@ -113,6 +121,9 @@ function DocxViewerInner({
   const [zoom, setZoom] = useState(1)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  const stableOnLoad = useCallback(() => onLoad?.(), [onLoad])
+  const stableOnError = useCallback((e: Error) => onError?.(e), [onError])
+
   useEffect(() => {
     let cancelled = false
     setState({ status: 'loading' })
@@ -121,17 +132,19 @@ function DocxViewerInner({
       .then(({ ast, numbering }) => {
         if (cancelled) return
         setState({ status: 'success', ast, numbering })
-        onLoad?.()
+        stableOnLoad()
       })
       .catch((err: unknown) => {
         if (cancelled) return
         const error = err instanceof Error ? err : new Error(String(err))
         setState({ status: 'error', error })
-        onError?.(error)
+        stableOnError(error)
       })
 
-    return () => { cancelled = true }
-  }, [src])
+    return () => {
+      cancelled = true
+    }
+  }, [src, stableOnLoad, stableOnError])
 
   // Ctrl/Cmd + scroll to zoom
   useEffect(() => {
@@ -147,7 +160,7 @@ function DocxViewerInner({
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
-  }, [state.status])
+  }, [])
 
   const outerStyle: CSSProperties = {
     display: 'flex',
@@ -162,7 +175,10 @@ function DocxViewerInner({
 
   if (state.status === 'idle' || state.status === 'loading') {
     return (
-      <div className={className} style={{ ...outerStyle, alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        className={className}
+        style={{ ...outerStyle, alignItems: 'center', justifyContent: 'center' }}
+      >
         <Spinner />
       </div>
     )
@@ -170,11 +186,22 @@ function DocxViewerInner({
 
   if (state.status === 'error') {
     return (
-      <div className={className} style={{ ...outerStyle, background: '#fef2f2', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div
+        className={className}
+        style={{
+          ...outerStyle,
+          background: '#fef2f2',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+        }}
+      >
         <div style={{ color: '#dc2626', maxWidth: '400px', textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</div>
           <strong>Failed to load document</strong>
-          <div style={{ marginTop: '0.5rem', fontSize: '14px', color: '#ef4444' }}>{state.error.message}</div>
+          <div style={{ marginTop: '0.5rem', fontSize: '14px', color: '#ef4444' }}>
+            {state.error.message}
+          </div>
         </div>
       </div>
     )
@@ -230,7 +257,15 @@ function DocxViewerInner({
 
 function Spinner() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#9ca3af' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '12px',
+        color: '#9ca3af',
+      }}
+    >
       <div
         style={{
           width: '32px',
@@ -241,7 +276,7 @@ function Spinner() {
           animation: 'docx-spin 0.8s linear infinite',
         }}
       />
-      <style>{`@keyframes docx-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{'@keyframes docx-spin { to { transform: rotate(360deg); } }'}</style>
       <span style={{ fontSize: '14px' }}>Loading document…</span>
     </div>
   )
@@ -249,7 +284,10 @@ function Spinner() {
 
 type ErrorBoundaryState = { hasError: boolean; error?: Error }
 
-class ErrorBoundary extends Component<{ children: ReactNode; onError?: (e: Error) => void }, ErrorBoundaryState> {
+class ErrorBoundary extends Component<
+  { children: ReactNode; onError?: (e: Error) => void },
+  ErrorBoundaryState
+> {
   state: ErrorBoundaryState = { hasError: false }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -263,7 +301,9 @@ class ErrorBoundary extends Component<{ children: ReactNode; onError?: (e: Error
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '1rem', color: '#dc2626', background: '#fef2f2', borderRadius: '6px' }}>
+        <div
+          style={{ padding: '1rem', color: '#dc2626', background: '#fef2f2', borderRadius: '6px' }}
+        >
           <strong>Render error:</strong> {this.state.error?.message}
         </div>
       )

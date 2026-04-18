@@ -63,7 +63,12 @@ export function Run({ run, showRedlines, insertClassName, deleteClassName }: Run
 
   if (run.url) {
     return (
-      <a href={run.url} target="_blank" rel="noopener noreferrer" style={{ ...style, color: run.color ?? '#2563eb' }}>
+      <a
+        href={run.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ ...style, color: run.color ?? '#2563eb' }}
+      >
         {run.text}
       </a>
     )
