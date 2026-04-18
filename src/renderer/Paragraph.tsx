@@ -71,6 +71,9 @@ export function Paragraph({
 }: ParagraphProps) {
   const paragraphStyle: CSSProperties = {}
   if (node.alignment) paragraphStyle.textAlign = node.alignment
+  if (node.spacingBefore != null) paragraphStyle.marginTop = `${node.spacingBefore}pt`
+  if (node.spacingAfter != null) paragraphStyle.marginBottom = `${node.spacingAfter}pt`
+  if (node.lineSpacing != null) paragraphStyle.lineHeight = node.lineSpacing
 
   // Resolve style-level properties to use as defaults for runs
   const resolvedStyle = node.style ? resolveStyle(node.style, styles) : {}
@@ -93,14 +96,20 @@ export function Paragraph({
 
   const tag = node.style ? HEADING_TAG_MAP[node.style] : undefined
   if (tag) {
-    // Start from browser heading defaults, then apply Word style (color, fontSize override)
     const headingStyle: CSSProperties = { ...HEADING_BASE_STYLES[tag] }
     if (resolvedStyle.color) headingStyle.color = resolvedStyle.color
     if (resolvedStyle.fontSize) headingStyle.fontSize = `${resolvedStyle.fontSize}pt`
+    if (resolvedStyle.fontFamily) headingStyle.fontFamily = `"${resolvedStyle.fontFamily}", serif`
+    if (resolvedStyle.allCaps) headingStyle.textTransform = 'uppercase'
+    else if (resolvedStyle.smallCaps) headingStyle.fontVariant = 'small-caps'
     return <tag style={{ ...headingStyle, ...paragraphStyle }}>{content}</tag>
   }
 
-  return <p style={{ margin: '0.5em 0', lineHeight: 1.5, ...paragraphStyle }}>{content}</p>
+  return (
+    <p style={{ margin: '0.5em 0', lineHeight: node.lineSpacing ?? 1.5, ...paragraphStyle }}>
+      {content}
+    </p>
+  )
 }
 
 function renderListItem(

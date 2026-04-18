@@ -10,6 +10,9 @@ export type ParagraphNode = {
   alignment?: 'left' | 'center' | 'right' | 'justify'
   runs: RunNode[]
   listInfo?: { level: number; numId: string }
+  spacingBefore?: number // pt
+  spacingAfter?: number // pt
+  lineSpacing?: number // multiplier e.g. 1, 1.5, 2
 }
 
 export type RunNode = {
@@ -21,6 +24,11 @@ export type RunNode = {
   strike?: boolean
   fontSize?: number
   color?: string
+  highlight?: string
+  fontFamily?: string
+  vertAlign?: 'superscript' | 'subscript'
+  allCaps?: boolean
+  smallCaps?: boolean
   redline?: 'insert' | 'delete'
   url?: string
 }
@@ -55,6 +63,9 @@ export type StyleDefinition = {
   italic?: boolean
   fontSize?: number
   color?: string
+  fontFamily?: string
+  allCaps?: boolean
+  smallCaps?: boolean
 }
 
 export type NumberingMap = Record<string, Record<number, NumberingLevel>>

@@ -21,6 +21,8 @@ export function parseStyles(xml: string): DocxStyles {
     if (rPr) {
       if (rPr.querySelector('w\\:b, b')) def.bold = true
       if (rPr.querySelector('w\\:i, i')) def.italic = true
+      if (rPr.querySelector('w\\:caps, caps')) def.allCaps = true
+      if (rPr.querySelector('w\\:smallCaps, smallCaps')) def.smallCaps = true
 
       const sz = rPr.querySelector('w\\:sz, sz')
       if (sz) {
@@ -32,6 +34,15 @@ export function parseStyles(xml: string): DocxStyles {
       if (color) {
         const val = color.getAttribute('w:val')
         if (val && val !== 'auto') def.color = `#${val}`
+      }
+
+      const fonts = rPr.querySelector('w\\:rFonts, rFonts')
+      if (fonts) {
+        def.fontFamily =
+          fonts.getAttribute('w:ascii') ??
+          fonts.getAttribute('w:hAnsi') ??
+          fonts.getAttribute('w:cs') ??
+          undefined
       }
     }
 

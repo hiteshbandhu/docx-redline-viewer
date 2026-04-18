@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { ImageNode, RunNode, StyleDefinition } from '../parser/types'
 
 type RunProps = {
@@ -30,16 +30,23 @@ export function Run({
 
   const style: CSSProperties = {}
 
-  // Apply style-level defaults first, then run-level overrides on top
+  // Style-level defaults, overridden by run-level props
   const bold = run.bold ?? styleDefaults.bold
   const italic = run.italic ?? styleDefaults.italic
   const fontSize = run.fontSize ?? styleDefaults.fontSize
   const color = run.color ?? styleDefaults.color
+  const fontFamily = run.fontFamily ?? styleDefaults.fontFamily
+  const allCaps = run.allCaps ?? styleDefaults.allCaps
+  const smallCaps = run.smallCaps ?? styleDefaults.smallCaps
 
   if (bold) style.fontWeight = 'bold'
   if (italic) style.fontStyle = 'italic'
   if (fontSize) style.fontSize = `${fontSize}pt`
   if (color) style.color = color
+  if (fontFamily) style.fontFamily = `"${fontFamily}", serif`
+  if (allCaps) style.textTransform = 'uppercase'
+  else if (smallCaps) style.fontVariant = 'small-caps'
+  if (run.highlight) style.backgroundColor = run.highlight
 
   const decorations: string[] = []
   if (run.underline) decorations.push('underline')
@@ -70,6 +77,12 @@ export function Run({
     style.textDecoration = [style.textDecoration, 'line-through'].filter(Boolean).join(' ')
   }
 
+  const text = run.text
+
+  let content: ReactNode = text
+  if (run.vertAlign === 'superscript') content = <sup>{text}</sup>
+  else if (run.vertAlign === 'subscript') content = <sub>{text}</sub>
+
   if (run.url) {
     return (
       <a
@@ -78,13 +91,13 @@ export function Run({
         rel="noopener noreferrer"
         style={{ ...style, color: run.color ?? styleDefaults.color ?? '#2563eb' }}
       >
-        {run.text}
+        {content}
       </a>
     )
   }
 
   const hasStyle = Object.keys(style).length > 0
-  if (!hasStyle) return <>{run.text}</>
+  if (!hasStyle && content === text) return <>{text}</>
 
-  return <span style={style}>{run.text}</span>
+  return <span style={style}>{content}</span>
 }

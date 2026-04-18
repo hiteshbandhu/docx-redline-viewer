@@ -53,6 +53,21 @@ function parseParagraph(el: Element, ctx: ParseContext): ParagraphNode {
     if (numId) listInfo = { level: Number.parseInt(ilvl, 10), numId }
   }
 
+  // Paragraph spacing: w:spacing w:before / w:after in twips (1/20pt), w:line in 240ths
+  let spacingBefore: number | undefined
+  let spacingAfter: number | undefined
+  let lineSpacing: number | undefined
+  const spacingEl = pPr?.querySelector('w\\:spacing, spacing')
+  if (spacingEl) {
+    const before = spacingEl.getAttribute('w:before')
+    const after = spacingEl.getAttribute('w:after')
+    const line = spacingEl.getAttribute('w:line')
+    const lineRule = spacingEl.getAttribute('w:lineRule')
+    if (before) spacingBefore = Math.round(Number.parseInt(before, 10) / 20)
+    if (after) spacingAfter = Math.round(Number.parseInt(after, 10) / 20)
+    if (line && lineRule === 'auto') lineSpacing = Number.parseInt(line, 10) / 240
+  }
+
   const runs: RunNode[] = []
 
   for (const child of el.children) {
@@ -96,7 +111,16 @@ function parseParagraph(el: Element, ctx: ParseContext): ParagraphNode {
     }
   }
 
-  return { type: 'paragraph', style: styleId, alignment, runs, listInfo }
+  return {
+    type: 'paragraph',
+    style: styleId,
+    alignment,
+    runs,
+    listInfo,
+    spacingBefore,
+    spacingAfter,
+    lineSpacing,
+  }
 }
 
 function parseRun(el: Element, _ctx: ParseContext): RunNode | null {
@@ -110,6 +134,8 @@ function parseRun(el: Element, _ctx: ParseContext): RunNode | null {
   const italic = !!rPr?.querySelector('w\\:i, i')
   const underline = !!rPr?.querySelector('w\\:u, u')
   const strike = !!rPr?.querySelector('w\\:strike, strike')
+  const allCaps = !!rPr?.querySelector('w\\:caps, caps')
+  const smallCaps = !!rPr?.querySelector('w\\:smallCaps, smallCaps')
 
   const szEl = rPr?.querySelector('w\\:sz, sz')
   const fontSize = szEl
@@ -120,6 +146,25 @@ function parseRun(el: Element, _ctx: ParseContext): RunNode | null {
   const colorVal = colorEl?.getAttribute('w:val')
   const color = colorVal && colorVal !== 'auto' ? `#${colorVal}` : undefined
 
+  const highlightEl = rPr?.querySelector('w\\:highlight, highlight')
+  const highlight = highlightEl ? normalizeHighlight(highlightEl.getAttribute('w:val')) : undefined
+
+  const fontsEl = rPr?.querySelector('w\\:rFonts, rFonts')
+  const fontFamily =
+    fontsEl?.getAttribute('w:ascii') ??
+    fontsEl?.getAttribute('w:hAnsi') ??
+    fontsEl?.getAttribute('w:cs') ??
+    undefined
+
+  const vertAlignEl = rPr?.querySelector('w\\:vertAlign, vertAlign')
+  const vertAlignVal = vertAlignEl?.getAttribute('w:val')
+  const vertAlign =
+    vertAlignVal === 'superscript'
+      ? 'superscript'
+      : vertAlignVal === 'subscript'
+        ? 'subscript'
+        : undefined
+
   return {
     type: 'run',
     text,
@@ -127,8 +172,13 @@ function parseRun(el: Element, _ctx: ParseContext): RunNode | null {
     italic: italic || undefined,
     underline: underline || undefined,
     strike: strike || undefined,
+    allCaps: allCaps || undefined,
+    smallCaps: smallCaps || undefined,
     fontSize: fontSize || undefined,
     color,
+    highlight,
+    fontFamily,
+    vertAlign,
   }
 }
 
@@ -224,6 +274,30 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 function localTag(el: Element): string {
   return el.localName.replace(/^w:/, '')
+}
+
+const HIGHLIGHT_MAP: Record<string, string> = {
+  yellow: '#ffff00',
+  green: '#00ff00',
+  cyan: '#00ffff',
+  magenta: '#ff00ff',
+  blue: '#0000ff',
+  red: '#ff0000',
+  darkBlue: '#00008b',
+  darkCyan: '#008b8b',
+  darkGreen: '#006400',
+  darkMagenta: '#8b008b',
+  darkRed: '#8b0000',
+  darkYellow: '#808000',
+  darkGray: '#a9a9a9',
+  lightGray: '#d3d3d3',
+  black: '#000000',
+  white: '#ffffff',
+}
+
+function normalizeHighlight(val: string | null): string | undefined {
+  if (!val || val === 'none') return undefined
+  return HIGHLIGHT_MAP[val] ?? undefined
 }
 
 function findChild(el: Element, localName: string): Element | null {
