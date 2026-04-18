@@ -1,4 +1,4 @@
-# AGENTS.md — @yas/docx-redline-viewer
+# AGENTS.md — @yas.chat/docx-redline-viewer
 
 This file helps AI agents understand the repo structure, architecture, and how to safely extend the package.
 
@@ -6,7 +6,7 @@ This file helps AI agents understand the repo structure, architecture, and how t
 
 A React component library that renders `.docx` files in the browser with support for toggling tracked changes (redlines). Pure TypeScript, no WASM, no server required. Built for legal tech at yas.chat.
 
-**npm:** `@yas/docx-redline-viewer`  
+**npm:** `@yas.chat/docx-redline-viewer`  
 **Entry:** `src/index.ts`  
 **Output:** `dist/` (ESM + CJS + `.d.ts`)
 
@@ -51,7 +51,7 @@ DOCX file (binary)
 ## Public API
 
 ```tsx
-import { DocxViewer } from '@yas/docx-redline-viewer'
+import { DocxViewer } from '@yas.chat/docx-redline-viewer'
 
 <DocxViewer
   src={string | ArrayBuffer | File}   // required

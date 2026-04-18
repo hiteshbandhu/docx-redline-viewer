@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DocxViewer } from '@yas/docx-redline-viewer'
+import { DocxViewer } from '@yas.chat/docx-redline-viewer'
 
 export default function App() {
   const [file, setFile] = useState<File | null>(null)

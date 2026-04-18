@@ -1,4 +1,4 @@
-# SKILL: @yas/docx-redline-viewer
+# SKILL: @yas.chat/docx-redline-viewer
 
 Use this skill when an agent needs to render a `.docx` file in a React application, display tracked changes (redlines), or integrate Word document viewing into a legal tech UI.
 
@@ -7,9 +7,9 @@ Use this skill when an agent needs to render a `.docx` file in a React applicati
 ## Install
 
 ```bash
-pnpm add @yas/docx-redline-viewer
+pnpm add @yas.chat/docx-redline-viewer
 # or
-npm install @yas/docx-redline-viewer
+npm install @yas.chat/docx-redline-viewer
 ```
 
 ---
@@ -17,7 +17,7 @@ npm install @yas/docx-redline-viewer
 ## Basic Usage
 
 ```tsx
-import { DocxViewer } from '@yas/docx-redline-viewer'
+import { DocxViewer } from '@yas.chat/docx-redline-viewer'
 
 <DocxViewer src="https://example.com/contract.docx" showRedlines={true} />
 ```
@@ -61,7 +61,7 @@ Must be used in a Client Component:
 ```tsx
 'use client'
 
-import { DocxViewer } from '@yas/docx-redline-viewer'
+import { DocxViewer } from '@yas.chat/docx-redline-viewer'
 
 export default function ContractPage({ url }: { url: string }) {
   return (
@@ -97,7 +97,7 @@ Override default red/green inline styles with Tailwind classes:
 'use client'
 
 import { useState } from 'react'
-import { DocxViewer } from '@yas/docx-redline-viewer'
+import { DocxViewer } from '@yas.chat/docx-redline-viewer'
 
 export function DocxUploadViewer() {
   const [file, setFile] = useState<File | null>(null)
@@ -182,7 +182,7 @@ No prop needed — it's always present when the document is loaded.
 If you need the raw AST without rendering:
 
 ```tsx
-import { parseDocx } from '@yas/docx-redline-viewer'
+import { parseDocx } from '@yas.chat/docx-redline-viewer'
 
 const { ast, numbering } = await parseDocx(file)
 // ast.body is ASTNode[]

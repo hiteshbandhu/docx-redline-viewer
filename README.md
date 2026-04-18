@@ -1,4 +1,4 @@
-# @yas/docx-redline-viewer
+# @yas.chat/docx-redline-viewer
 
 React component for rendering `.docx` files in the browser with tracked changes (redlines) support. Built for legal tech at [yas.chat](https://yas.chat).
 
@@ -11,15 +11,15 @@ React component for rendering `.docx` files in the browser with tracked changes 
 ## Install
 
 ```bash
-npm install @yas/docx-redline-viewer
+npm install @yas.chat/docx-redline-viewer
 # or
-pnpm add @yas/docx-redline-viewer
+pnpm add @yas.chat/docx-redline-viewer
 ```
 
 ## Usage
 
 ```tsx
-import { DocxViewer } from '@yas/docx-redline-viewer'
+import { DocxViewer } from '@yas.chat/docx-redline-viewer'
 
 // From URL
 <DocxViewer src="https://example.com/contract.docx" showRedlines={true} />
@@ -62,7 +62,7 @@ Add `'use client'` to any file that uses the component:
 ```tsx
 'use client'
 
-import { DocxViewer } from '@yas/docx-redline-viewer'
+import { DocxViewer } from '@yas.chat/docx-redline-viewer'
 
 export default function Page() {
   return (
