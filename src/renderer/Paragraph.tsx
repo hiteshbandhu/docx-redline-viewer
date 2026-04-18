@@ -13,27 +13,6 @@ type ParagraphProps = {
   counters: Map<string, number[]>
 }
 
-const HEADING_STYLES = new Set([
-  'Heading1',
-  'Heading2',
-  'Heading3',
-  'Heading4',
-  'Heading5',
-  'Heading6',
-  'heading1',
-  'heading2',
-  'heading3',
-  'heading4',
-  'heading5',
-  'heading6',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-])
-
 const HEADING_TAG_MAP: Record<string, keyof JSX.IntrinsicElements> = {
   Heading1: 'h1',
   heading1: 'h1',
