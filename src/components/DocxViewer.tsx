@@ -1,4 +1,4 @@
-import { Component, type CSSProperties, type ReactNode, useEffect, useState } from 'react'
+import { Component, type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 import { parseDocx } from '../parser'
 import type { DocxAST, NumberingMap } from '../parser/types'
 import { renderAST } from '../renderer'
@@ -20,6 +20,85 @@ type ViewerState =
   | { status: 'success'; ast: DocxAST; numbering: NumberingMap }
   | { status: 'error'; error: Error }
 
+const PAGE_WIDTH_PX = 816  // ~8.5in at 96dpi
+const PAGE_PADDING_PX = 96 // ~1in margins
+const MIN_ZOOM = 0.5
+const MAX_ZOOM = 2
+const ZOOM_STEP = 0.1
+
+function ZoomBar({ zoom, onZoom }: { zoom: number; onZoom: (z: number) => void }) {
+  const clamp = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 10) / 10))
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '8px 16px',
+        background: '#3a3a3a',
+        borderBottom: '1px solid #222',
+        userSelect: 'none',
+        flexShrink: 0,
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onZoom(clamp(zoom - ZOOM_STEP))}
+        disabled={zoom <= MIN_ZOOM}
+        style={btnStyle(zoom <= MIN_ZOOM)}
+        aria-label="Zoom out"
+      >
+        −
+      </button>
+      <div style={{ width: '120px' }}>
+        <input
+          type="range"
+          min={MIN_ZOOM * 100}
+          max={MAX_ZOOM * 100}
+          step={ZOOM_STEP * 100}
+          value={Math.round(zoom * 100)}
+          onChange={(e) => onZoom(Number(e.target.value) / 100)}
+          style={{ width: '100%', accentColor: '#60a5fa', cursor: 'pointer' }}
+          aria-label="Zoom level"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={() => onZoom(clamp(zoom + ZOOM_STEP))}
+        disabled={zoom >= MAX_ZOOM}
+        style={btnStyle(zoom >= MAX_ZOOM)}
+        aria-label="Zoom in"
+      >
+        +
+      </button>
+      <span style={{ color: '#9ca3af', fontSize: '13px', minWidth: '38px', textAlign: 'right' }}>
+        {Math.round(zoom * 100)}%
+      </span>
+      <button
+        type="button"
+        onClick={() => onZoom(1)}
+        style={{ ...btnStyle(zoom === 1), fontSize: '11px', padding: '3px 8px' }}
+      >
+        Reset
+      </button>
+    </div>
+  )
+}
+
+function btnStyle(disabled: boolean): CSSProperties {
+  return {
+    background: disabled ? '#2a2a2a' : '#4b5563',
+    color: disabled ? '#555' : '#e5e7eb',
+    border: 'none',
+    borderRadius: '4px',
+    padding: '4px 10px',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: '14px',
+    lineHeight: 1,
+  }
+}
+
 function DocxViewerInner({
   src,
   showRedlines = false,
@@ -31,6 +110,8 @@ function DocxViewerInner({
   deleteClassName,
 }: DocxViewerProps) {
   const [state, setState] = useState<ViewerState>({ status: 'idle' })
+  const [zoom, setZoom] = useState(1)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -49,31 +130,52 @@ function DocxViewerInner({
         onError?.(error)
       })
 
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [src])
 
-  const rootStyle: CSSProperties = {
-    fontFamily: 'Georgia, "Times New Roman", serif',
-    fontSize: '16px',
-    lineHeight: 1.6,
-    color: '#1a1a1a',
+  // Ctrl/Cmd + scroll to zoom
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      setZoom((z) => {
+        const next = z - e.deltaY * 0.001
+        return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(next * 10) / 10))
+      })
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [state.status])
+
+  const outerStyle: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    minHeight: '400px',
+    background: '#525659',
+    overflow: 'hidden',
+    borderRadius: '6px',
     ...style,
   }
 
   if (state.status === 'idle' || state.status === 'loading') {
     return (
-      <div className={className} style={{ ...rootStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '120px', color: '#6b7280' }}>
-        <span>Loading document…</span>
+      <div className={className} style={{ ...outerStyle, alignItems: 'center', justifyContent: 'center' }}>
+        <Spinner />
       </div>
     )
   }
 
   if (state.status === 'error') {
     return (
-      <div className={className} style={{ ...rootStyle, padding: '1rem', color: '#dc2626', background: '#fef2f2', borderRadius: '6px' }}>
-        <strong>Failed to load document:</strong> {state.error.message}
+      <div className={className} style={{ ...outerStyle, background: '#fef2f2', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ color: '#dc2626', maxWidth: '400px', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</div>
+          <strong>Failed to load document</strong>
+          <div style={{ marginTop: '0.5rem', fontSize: '14px', color: '#ef4444' }}>{state.error.message}</div>
+        </div>
       </div>
     )
   }
@@ -85,9 +187,62 @@ function DocxViewerInner({
     deleteClassName,
   })
 
+  // The page scales from top-center. We need to account for the scaled height
+  // so the scroll area is correct.
+  const scaledPageWidth = PAGE_WIDTH_PX * zoom
+
   return (
-    <div className={className} style={rootStyle}>
-      {nodes}
+    <div className={className} style={outerStyle}>
+      <ZoomBar zoom={zoom} onZoom={setZoom} />
+      <div
+        ref={scrollRef}
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'auto',
+          padding: `${40 * zoom}px ${Math.max(24, (scaledPageWidth - PAGE_WIDTH_PX) / 2 + 40)}px`,
+        }}
+      >
+        <div
+          style={{
+            width: `${PAGE_WIDTH_PX}px`,
+            minHeight: '1056px', // ~11in at 96dpi
+            margin: '0 auto',
+            background: '#ffffff',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
+            padding: `${PAGE_PADDING_PX}px`,
+            transformOrigin: 'top center',
+            transform: `scale(${zoom})`,
+            // Keep the layout flow correct after scaling
+            marginBottom: `${(1056 * zoom) - 1056 + 40}px`,
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontSize: '16px',
+            lineHeight: 1.6,
+            color: '#1a1a1a',
+          }}
+        >
+          {nodes}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Spinner() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#9ca3af' }}>
+      <div
+        style={{
+          width: '32px',
+          height: '32px',
+          border: '3px solid #4b5563',
+          borderTopColor: '#60a5fa',
+          borderRadius: '50%',
+          animation: 'docx-spin 0.8s linear infinite',
+        }}
+      />
+      <style>{`@keyframes docx-spin { to { transform: rotate(360deg); } }`}</style>
+      <span style={{ fontSize: '14px' }}>Loading document…</span>
     </div>
   )
 }
