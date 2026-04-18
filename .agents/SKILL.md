@@ -142,11 +142,17 @@ export function DocxUploadViewer() {
 | Headings (h1–h6) | ✅ via `pStyle` |
 | Bold / italic / underline / strikethrough | ✅ |
 | Text color, font size | ✅ |
+| Text highlight (background color) | ✅ |
+| Font family | ✅ |
+| Superscript / subscript | ✅ |
+| All caps / small caps | ✅ |
+| Paragraph spacing (before/after/line) | ✅ |
 | Hyperlinks | ✅ opens in new tab |
 | Tables | ✅ with borders |
 | Images | ✅ base64 embedded |
 | Ordered lists | ✅ |
 | Unordered lists | ✅ |
+| Explicit page breaks | ✅ renders as separate pages with page numbers |
 | Tracked insertions (`w:ins`) | ✅ green underline |
 | Tracked deletions (`w:del`) | ✅ red strikethrough |
 | Comments, footnotes, headers/footers | ❌ v2 |
@@ -184,6 +190,7 @@ If you need the raw AST without rendering:
 ```tsx
 import { parseDocx } from '@yas.chat/docx-redline-viewer'
 
-const { ast, numbering } = await parseDocx(file)
+const { ast, numbering, styles } = await parseDocx(file)
 // ast.body is ASTNode[]
+// ASTNode = ParagraphNode | TableNode | ImageNode | PageBreakNode
 ```

@@ -78,8 +78,11 @@ export default function Page() {
 ## What it renders
 
 - Paragraphs, headings (h1–h6), bold, italic, underline, strikethrough
-- Text color and font size from run properties
-- Hyperlinks
+- Text color, font size, font family, highlight (background color)
+- Superscript, subscript, all caps, small caps
+- Paragraph spacing (before / after / line height)
+- Explicit page breaks — rendered as separate pages with `— N —` page numbers
+- Hyperlinks (open in new tab)
 - Tables with borders
 - Images (base64 embedded)
 - Ordered and unordered lists

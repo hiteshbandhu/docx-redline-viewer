@@ -34,9 +34,9 @@ DOCX file (binary)
 
 | File | Role |
 |------|------|
-| `src/parser/types.ts` | All AST types (`DocxAST`, `ParagraphNode`, `RunNode`, `TableNode`, `ImageNode`) |
+| `src/parser/types.ts` | All AST types (`DocxAST`, `ParagraphNode`, `RunNode`, `TableNode`, `ImageNode`, `PageBreakNode`) |
 | `src/parser/unzip.ts` | Unzips `.docx` using fflate, exposes `getText()` and `getBytes()` |
-| `src/parser/document.ts` | Parses `word/document.xml` → `ASTNode[]`. Handles paragraphs, tables, images, hyperlinks, redlines |
+| `src/parser/document.ts` | Parses `word/document.xml` → `ASTNode[]`. Handles paragraphs, tables, images, hyperlinks, redlines, page breaks |
 | `src/parser/styles.ts` | Parses `word/styles.xml` → `DocxStyles` map |
 | `src/parser/numbering.ts` | Parses `word/numbering.xml` → `NumberingMap` for list rendering |
 | `src/parser/relationships.ts` | Parses `.rels` files → `RelationshipMap` (used for image and hyperlink lookup) |
@@ -44,7 +44,8 @@ DOCX file (binary)
 | `src/renderer/Paragraph.tsx` | Renders paragraphs, headings (h1–h6), and list items |
 | `src/renderer/Run.tsx` | Renders text runs with inline styles, redline highlights, hyperlinks, images |
 | `src/renderer/Table.tsx` | Renders tables with borders |
-| `src/components/DocxViewer.tsx` | Main exported component. Handles loading, error boundary, zoom, paper layout |
+| `src/components/DocxViewer.tsx` | Main exported component. Handles loading, error boundary, zoom, paper layout, page splitting |
+| `src/utils.ts` | `splitIntoPages(nodes)` — splits AST body at `page-break` nodes into per-page arrays |
 
 ---
 
@@ -74,7 +75,9 @@ The component is self-contained — gray background, white paper, zoom bar inclu
 ```ts
 DocxAST = { body: ASTNode[] }
 
-ASTNode = ParagraphNode | TableNode | ImageNode
+ASTNode = ParagraphNode | TableNode | ImageNode | PageBreakNode
+
+PageBreakNode = { type: 'page-break' }
 
 ParagraphNode = {
   type: 'paragraph'
@@ -82,6 +85,10 @@ ParagraphNode = {
   alignment?: 'left' | 'center' | 'right' | 'justify'
   runs: RunNode[]
   listInfo?: { level: number; numId: string }
+  spacingBefore?: number  // pt
+  spacingAfter?: number   // pt
+  lineSpacing?: number    // multiplier e.g. 1.5, 2
+  pageBreakBefore?: boolean
 }
 
 RunNode = {
@@ -93,6 +100,11 @@ RunNode = {
   strike?: boolean
   fontSize?: number       // in pt
   color?: string          // hex e.g. '#1F3864'
+  highlight?: string      // hex background color
+  fontFamily?: string
+  vertAlign?: 'superscript' | 'subscript'
+  allCaps?: boolean
+  smallCaps?: boolean
   redline?: 'insert' | 'delete'
   url?: string
 }
@@ -141,10 +153,23 @@ pnpm playground     # start Vite playground at localhost:5173
 
 - `tests/parser.test.ts` — unit tests for styles, relationships, numbering parsers
 - `tests/integration.test.ts` — end-to-end tests using fixture `.docx` files in `fixtures/`
-- `scripts/generate-fixtures.mjs` — regenerates fixture files if needed (`node scripts/generate-fixtures.mjs`)
+- `tests/pagebreaks.test.ts` — unit tests for `splitIntoPages()` and all page break scenarios (explicit break, `pageBreakBefore`, consecutive breaks, break at start/end, mid-paragraph break)
+- `scripts/generate-fixtures.mjs` — regenerates all fixture files (`node scripts/generate-fixtures.mjs`)
+
+---
+
+## Page Breaks
+
+- `w:br w:type="page"` inside a run → emits a `PageBreakNode` after that paragraph
+- `w:pageBreakBefore` on a paragraph's `w:pPr` → emits a `PageBreakNode` before that paragraph
+- Carrier paragraphs (runs = only page-break sentinel, no text) are stripped from the AST
+- `splitIntoPages(ast.body)` in `src/utils.ts` splits the body at `page-break` nodes; empty pages (consecutive breaks, trailing break) are filtered out
+- `DocxViewer` renders each page as a separate white paper `div` with a centered `— N —` page number at the bottom
+
+Note: implicit page breaks from content overflow are not supported (requires a layout engine).
 
 ---
 
 ## Non-Goals (v1)
 
-No editing, PDF export, comments, footnotes, headers/footers, pagination, or dark mode theming.
+No editing, PDF export, comments, footnotes, headers/footers, or dark mode theming.
