@@ -2,7 +2,9 @@ export type DocxAST = {
   body: ASTNode[]
 }
 
-export type ASTNode = ParagraphNode | TableNode | ImageNode
+export type PageBreakNode = { type: 'page-break' }
+
+export type ASTNode = ParagraphNode | TableNode | ImageNode | PageBreakNode
 
 export type ParagraphNode = {
   type: 'paragraph'
@@ -13,6 +15,7 @@ export type ParagraphNode = {
   spacingBefore?: number // pt
   spacingAfter?: number // pt
   lineSpacing?: number // multiplier e.g. 1, 1.5, 2
+  pageBreakBefore?: boolean
 }
 
 export type RunNode = {

@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react'
 import { parseDocx } from '../parser'
-import type { DocxAST, DocxStyles, NumberingMap } from '../parser/types'
+import type { ASTNode, DocxAST, DocxStyles, NumberingMap } from '../parser/types'
 import { renderAST } from '../renderer'
 
 export type DocxViewerProps = {
@@ -105,6 +105,21 @@ function btnStyle(disabled: boolean): CSSProperties {
     fontSize: '14px',
     lineHeight: 1,
   }
+}
+
+function splitIntoPages(nodes: ASTNode[]): ASTNode[][] {
+  const pages: ASTNode[][] = []
+  let current: ASTNode[] = []
+  for (const node of nodes) {
+    if (node.type === 'page-break') {
+      pages.push(current)
+      current = []
+    } else {
+      current.push(node)
+    }
+  }
+  pages.push(current)
+  return pages.filter((p) => p.length > 0)
 }
 
 function DocxViewerInner({
@@ -207,17 +222,17 @@ function DocxViewerInner({
     )
   }
 
-  const nodes = renderAST(state.ast.body, {
+  const pages = splitIntoPages(state.ast.body)
+  const renderOptions = {
     showRedlines,
     numbering: state.numbering,
     styles: state.styles,
     insertClassName,
     deleteClassName,
-  })
+  }
 
-  // The page scales from top-center. We need to account for the scaled height
-  // so the scroll area is correct.
   const scaledPageWidth = PAGE_WIDTH_PX * zoom
+  const PAGE_HEIGHT_PX = 1056 // ~11in at 96dpi
 
   return (
     <div className={className} style={outerStyle}>
@@ -231,26 +246,47 @@ function DocxViewerInner({
           padding: `${40 * zoom}px ${Math.max(24, (scaledPageWidth - PAGE_WIDTH_PX) / 2 + 40)}px`,
         }}
       >
-        <div
-          style={{
-            width: `${PAGE_WIDTH_PX}px`,
-            minHeight: '1056px', // ~11in at 96dpi
-            margin: '0 auto',
-            background: '#ffffff',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
-            padding: `${PAGE_PADDING_PX}px`,
-            transformOrigin: 'top center',
-            transform: `scale(${zoom})`,
-            // Keep the layout flow correct after scaling
-            marginBottom: `${(1056 * zoom) - 1056 + 40}px`,
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            fontSize: '16px',
-            lineHeight: 1.6,
-            color: '#1a1a1a',
-          }}
-        >
-          {nodes}
-        </div>
+        {pages.map((pageNodes, pageIndex) => {
+          const pageContent = renderAST(pageNodes, renderOptions)
+          return (
+            <div
+              key={pageIndex}
+              style={{
+                width: `${PAGE_WIDTH_PX}px`,
+                minHeight: `${PAGE_HEIGHT_PX}px`,
+                margin: '0 auto',
+                background: '#ffffff',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
+                padding: `${PAGE_PADDING_PX}px`,
+                paddingBottom: `${PAGE_PADDING_PX - 24}px`,
+                transformOrigin: 'top center',
+                transform: `scale(${zoom})`,
+                marginBottom: `${PAGE_HEIGHT_PX * zoom - PAGE_HEIGHT_PX + (pageIndex < pages.length - 1 ? 24 * zoom : 40)}px`,
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontSize: '16px',
+                lineHeight: 1.6,
+                color: '#1a1a1a',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <div style={{ flex: 1 }}>{pageContent}</div>
+              <div
+                style={{
+                  textAlign: 'center',
+                  color: '#9ca3af',
+                  fontSize: '12px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid #e5e7eb',
+                  marginTop: '16px',
+                  flexShrink: 0,
+                }}
+              >
+                — {pageIndex + 1} —
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

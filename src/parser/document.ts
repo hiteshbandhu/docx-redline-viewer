@@ -3,6 +3,7 @@ import type {
   DocxStyles,
   ImageNode,
   NumberingMap,
+  PageBreakNode,
   ParagraphNode,
   RelationshipMap,
   RunNode,
@@ -27,10 +28,17 @@ export function parseDocument(xml: string, ctx: ParseContext): ASTNode[] {
   if (!body) return []
 
   const nodes: ASTNode[] = []
+  const pageBreak: PageBreakNode = { type: 'page-break' }
+
   for (const child of body.children) {
     const localName = localTag(child)
     if (localName === 'p') {
-      nodes.push(parseParagraph(child, ctx))
+      const para = parseParagraph(child, ctx)
+      if (para.pageBreakBefore) nodes.push(pageBreak)
+      nodes.push(para)
+      if (para.runs.some((r) => (r as RunNode & { _pageBreak?: boolean })._pageBreak)) {
+        nodes.push(pageBreak)
+      }
     } else if (localName === 'tbl') {
       nodes.push(parseTable(child, ctx))
     }
@@ -41,6 +49,7 @@ export function parseDocument(xml: string, ctx: ParseContext): ASTNode[] {
 function parseParagraph(el: Element, ctx: ParseContext): ParagraphNode {
   const pPr = el.querySelector('w\\:pPr, pPr')
   const styleId = pPr?.querySelector('w\\:pStyle, pStyle')?.getAttribute('w:val') ?? undefined
+  const pageBreakBefore = !!pPr?.querySelector('w\\:pageBreakBefore, pageBreakBefore')
 
   const alignVal = pPr?.querySelector('w\\:jc, jc')?.getAttribute('w:val')
   const alignment = normalizeAlignment(alignVal)
@@ -82,8 +91,19 @@ function parseParagraph(el: Element, ctx: ParseContext): ParagraphNode {
           runs.push({ type: 'run', text: '', _image: imageRun } as RunNode & { _image: ImageNode })
         }
       } else {
-        const run = parseRun(child, ctx)
-        if (run) runs.push(run)
+        // Detect explicit page break: <w:br w:type="page"/>
+        const brEl = findChild(child, 'br')
+        if (
+          brEl &&
+          (brEl.getAttribute('w:type') === 'page' || brEl.getAttribute('type') === 'page')
+        ) {
+          runs.push({ type: 'run', text: '', _pageBreak: true } as RunNode & {
+            _pageBreak: boolean
+          })
+        } else {
+          const run = parseRun(child, ctx)
+          if (run) runs.push(run)
+        }
       }
     } else if (tag === 'hyperlink') {
       const rId = child.getAttribute('r:id')
@@ -120,6 +140,7 @@ function parseParagraph(el: Element, ctx: ParseContext): ParagraphNode {
     spacingBefore,
     spacingAfter,
     lineSpacing,
+    pageBreakBefore: pageBreakBefore || undefined,
   }
 }
 
