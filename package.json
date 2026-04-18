@@ -1,7 +1,7 @@
 {
   "name": "@yas.chat/docx-redline-viewer",
-  "version": "0.1.0-beta.1",
-  "description": "React component for rendering DOCX files with tracked changes (redlines) support — built for legal tech",
+  "version": "0.1.0-beta.2",
+  "description": "React component for rendering DOCX files with tracked changes (redlines) support — built for legal tech at yas.chat (powered by thinkingcortex.com)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 # @yas.chat/docx-redline-viewer
 
-React component for rendering `.docx` files in the browser with tracked changes (redlines) support. Built for legal tech at [yas.chat](https://yas.chat).
+React component for rendering `.docx` files in the browser with tracked changes (redlines) support. Built for legal tech at [yas.chat](https://yas.chat) (powered by [thinkingcortex.com](https://thinkingcortex.com)).
 
 - Word-style paper layout with zoom controls
 - Show/hide tracked changes (insertions + deletions)
@@ -90,4 +90,4 @@ export default function Page() {
 
 ## License
 
-MIT — built by [yas.chat](https://yas.chat)
+MIT — built by [yas.chat](https://yas.chat) (powered by [thinkingcortex.com](https://thinkingcortex.com))
