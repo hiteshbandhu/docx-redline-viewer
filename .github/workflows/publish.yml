@@ -1,0 +1,33 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Publish if version changed
+        run: |
+          PUBLISHED=$(npm view @yas.chat/docx-redline-viewer version 2>/dev/null || echo "none")
+          LOCAL=$(node -p "require('./package.json').version")
+          if [ "$PUBLISHED" != "$LOCAL" ]; then
+            echo "Publishing $LOCAL"
+            npm publish --access public --tag beta
+          else
+            echo "Version $LOCAL already published, skipping"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
