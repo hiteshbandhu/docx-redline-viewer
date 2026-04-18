@@ -1,10 +1,11 @@
-import type { ImageNode, NumberingMap, RunNode, TableNode } from '../parser/types'
+import type { DocxStyles, ImageNode, NumberingMap, RunNode, TableNode } from '../parser/types'
 import { Paragraph } from './Paragraph'
 
 type TableProps = {
   node: TableNode
   showRedlines: boolean
   numbering: NumberingMap
+  styles: DocxStyles
   insertClassName?: string
   deleteClassName?: string
   counters: Map<string, number[]>
@@ -14,6 +15,7 @@ export function Table({
   node,
   showRedlines,
   numbering,
+  styles,
   insertClassName,
   deleteClassName,
   counters,
@@ -47,6 +49,7 @@ export function Table({
                     node={p}
                     showRedlines={showRedlines}
                     numbering={numbering}
+                    styles={styles}
                     insertClassName={insertClassName}
                     deleteClassName={deleteClassName}
                     counters={counters}

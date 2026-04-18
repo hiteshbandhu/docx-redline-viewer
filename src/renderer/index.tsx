@@ -1,10 +1,11 @@
-import type { ASTNode, NumberingMap } from '../parser/types'
+import type { ASTNode, DocxStyles, NumberingMap } from '../parser/types'
 import { Paragraph } from './Paragraph'
 import { Table } from './Table'
 
 type RenderOptions = {
   showRedlines: boolean
   numbering: NumberingMap
+  styles: DocxStyles
   insertClassName?: string
   deleteClassName?: string
 }
@@ -20,6 +21,7 @@ export function renderAST(nodes: ASTNode[], options: RenderOptions): React.React
           node={node}
           showRedlines={options.showRedlines}
           numbering={options.numbering}
+          styles={options.styles}
           insertClassName={options.insertClassName}
           deleteClassName={options.deleteClassName}
           counters={counters}
@@ -34,6 +36,7 @@ export function renderAST(nodes: ASTNode[], options: RenderOptions): React.React
           node={node}
           showRedlines={options.showRedlines}
           numbering={options.numbering}
+          styles={options.styles}
           insertClassName={options.insertClassName}
           deleteClassName={options.deleteClassName}
           counters={counters}

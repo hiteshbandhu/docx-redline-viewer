@@ -185,10 +185,11 @@ function parseTable(el: Element, ctx: ParseContext): TableNode {
 function parseDrawing(el: Element, ctx: ParseContext): ImageNode | null {
   // Walk all descendants to find blip — namespace prefixes vary across Word versions
   const blip = findDescendantByLocalName(el, 'blip')
-  const rEmbed = blip?.getAttributeNS(
-    'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
-    'embed',
-  ) ?? blip?.getAttribute('r:embed')
+  const rEmbed =
+    blip?.getAttributeNS(
+      'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+      'embed',
+    ) ?? blip?.getAttribute('r:embed')
   if (!rEmbed) return null
 
   const target = ctx.rels[rEmbed]

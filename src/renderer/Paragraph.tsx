@@ -1,13 +1,19 @@
 import type { CSSProperties } from 'react'
-import type { ImageNode, ParagraphNode } from '../parser/types'
-import type { RunNode } from '../parser/types'
-import type { NumberingMap } from '../parser/types'
+import type {
+  DocxStyles,
+  ImageNode,
+  NumberingMap,
+  ParagraphNode,
+  RunNode,
+  StyleDefinition,
+} from '../parser/types'
 import { Run } from './Run'
 
 type ParagraphProps = {
   node: ParagraphNode
   showRedlines: boolean
   numbering: NumberingMap
+  styles: DocxStyles
   insertClassName?: string
   deleteClassName?: string
   counters: Map<string, number[]>
@@ -28,7 +34,7 @@ const HEADING_TAG_MAP: Record<string, keyof JSX.IntrinsicElements> = {
   heading6: 'h6',
 }
 
-const HEADING_STYLES_MAP: Record<string, CSSProperties> = {
+const HEADING_BASE_STYLES: Record<string, CSSProperties> = {
   h1: { fontSize: '2em', fontWeight: 'bold', margin: '0.67em 0' },
   h2: { fontSize: '1.5em', fontWeight: 'bold', margin: '0.75em 0' },
   h3: { fontSize: '1.17em', fontWeight: 'bold', margin: '0.83em 0' },
@@ -37,22 +43,44 @@ const HEADING_STYLES_MAP: Record<string, CSSProperties> = {
   h6: { fontSize: '0.75em', fontWeight: 'bold', margin: '1.67em 0' },
 }
 
+// Resolve a style definition following the basedOn chain
+function resolveStyle(
+  styleId: string,
+  styles: DocxStyles,
+  visited = new Set<string>(),
+): StyleDefinition {
+  if (visited.has(styleId)) return {}
+  visited.add(styleId)
+  const def = styles[styleId]
+  if (!def) return {}
+  if (def.basedOn) {
+    const base = resolveStyle(def.basedOn, styles, visited)
+    return { ...base, ...def }
+  }
+  return def
+}
+
 export function Paragraph({
   node,
   showRedlines,
   numbering,
+  styles,
   insertClassName,
   deleteClassName,
   counters,
 }: ParagraphProps) {
-  const style: CSSProperties = {}
-  if (node.alignment) style.textAlign = node.alignment
+  const paragraphStyle: CSSProperties = {}
+  if (node.alignment) paragraphStyle.textAlign = node.alignment
+
+  // Resolve style-level properties to use as defaults for runs
+  const resolvedStyle = node.style ? resolveStyle(node.style, styles) : {}
 
   const runs = node.runs as (RunNode & { _image?: ImageNode })[]
   const content = runs.map((run, i) => (
     <Run
       key={i}
       run={run}
+      styleDefaults={resolvedStyle}
       showRedlines={showRedlines}
       insertClassName={insertClassName}
       deleteClassName={deleteClassName}
@@ -60,17 +88,19 @@ export function Paragraph({
   ))
 
   if (node.listInfo) {
-    return renderListItem(node, content, numbering, counters, style)
+    return renderListItem(node, content, numbering, counters, paragraphStyle)
   }
 
   const tag = node.style ? HEADING_TAG_MAP[node.style] : undefined
   if (tag) {
-    const headingStyle = { ...HEADING_STYLES_MAP[tag], ...style }
-    const Tag = tag
-    return <Tag style={headingStyle}>{content}</Tag>
+    // Start from browser heading defaults, then apply Word style (color, fontSize override)
+    const headingStyle: CSSProperties = { ...HEADING_BASE_STYLES[tag] }
+    if (resolvedStyle.color) headingStyle.color = resolvedStyle.color
+    if (resolvedStyle.fontSize) headingStyle.fontSize = `${resolvedStyle.fontSize}pt`
+    return <tag style={{ ...headingStyle, ...paragraphStyle }}>{content}</tag>
   }
 
-  return <p style={{ margin: '0.5em 0', lineHeight: 1.5, ...style }}>{content}</p>
+  return <p style={{ margin: '0.5em 0', lineHeight: 1.5, ...paragraphStyle }}>{content}</p>
 }
 
 function renderListItem(
@@ -83,7 +113,6 @@ function renderListItem(
   const { level, numId } = node.listInfo!
   const levelDef = numbering[numId]?.[level]
   const isBullet = !levelDef || levelDef.format === 'bullet'
-
   const indent = (level + 1) * 1.5
 
   if (isBullet) {
@@ -103,7 +132,6 @@ function renderListItem(
     )
   }
 
-  // Track counter per numId+level
   const key = `${numId}-${level}`
   const current = counters.get(key) ?? 0
   counters.set(key, current + 1)

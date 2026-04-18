@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react'
 import { parseDocx } from '../parser'
-import type { DocxAST, NumberingMap } from '../parser/types'
+import type { DocxAST, DocxStyles, NumberingMap } from '../parser/types'
 import { renderAST } from '../renderer'
 
 export type DocxViewerProps = {
@@ -25,7 +25,7 @@ export type DocxViewerProps = {
 type ViewerState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'success'; ast: DocxAST; numbering: NumberingMap }
+  | { status: 'success'; ast: DocxAST; numbering: NumberingMap; styles: DocxStyles }
   | { status: 'error'; error: Error }
 
 const PAGE_WIDTH_PX = 816 // ~8.5in at 96dpi
@@ -129,9 +129,9 @@ function DocxViewerInner({
     setState({ status: 'loading' })
 
     parseDocx(src)
-      .then(({ ast, numbering }) => {
+      .then(({ ast, numbering, styles }) => {
         if (cancelled) return
-        setState({ status: 'success', ast, numbering })
+        setState({ status: 'success', ast, numbering, styles })
         stableOnLoad()
       })
       .catch((err: unknown) => {
@@ -210,6 +210,7 @@ function DocxViewerInner({
   const nodes = renderAST(state.ast.body, {
     showRedlines,
     numbering: state.numbering,
+    styles: state.styles,
     insertClassName,
     deleteClassName,
   })
