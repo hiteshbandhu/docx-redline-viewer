@@ -45,5 +45,14 @@
     "changeset": "changeset",
     "release": "pnpm build && changeset publish"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiteshbandhu/docx-redline-viewer"
+  },
+  "homepage": "https://github.com/hiteshbandhu/docx-redline-viewer#readme",
+  "bugs": {
+    "url": "https://github.com/hiteshbandhu/docx-redline-viewer/issues"
+  },
+  "keywords": ["docx", "word", "redline", "tracked-changes", "react", "legal-tech"]
 }
