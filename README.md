@@ -1,19 +1,25 @@
-# react-docx-viewer
+# @yas/docx-redline-viewer
 
-React component for rendering `.docx` files in the browser with tracked changes (redlines) support.
+React component for rendering `.docx` files in the browser with tracked changes (redlines) support. Built for legal tech at [yas.chat](https://yas.chat).
+
+- Word-style paper layout with zoom controls
+- Show/hide tracked changes (insertions + deletions)
+- Tailwind CSS friendly
+- Works in Next.js via `'use client'`
+- No WASM, no server, pure browser
 
 ## Install
 
 ```bash
-npm install react-docx-viewer
+npm install @yas/docx-redline-viewer
 # or
-pnpm add react-docx-viewer
+pnpm add @yas/docx-redline-viewer
 ```
 
 ## Usage
 
 ```tsx
-import { DocxViewer } from 'react-docx-viewer'
+import { DocxViewer } from '@yas/docx-redline-viewer'
 
 // From URL
 <DocxViewer src="https://example.com/contract.docx" showRedlines={true} />
@@ -56,9 +62,29 @@ Add `'use client'` to any file that uses the component:
 ```tsx
 'use client'
 
-import { DocxViewer } from 'react-docx-viewer'
+import { DocxViewer } from '@yas/docx-redline-viewer'
+
+export default function Page() {
+  return (
+    <DocxViewer
+      src="https://example.com/contract.docx"
+      showRedlines={true}
+      style={{ height: '100vh' }}
+    />
+  )
+}
 ```
+
+## What it renders
+
+- Paragraphs, headings (h1–h6), bold, italic, underline, strikethrough
+- Text color and font size from run properties
+- Hyperlinks
+- Tables with borders
+- Images (base64 embedded)
+- Ordered and unordered lists
+- Tracked changes: green underline for insertions, red strikethrough for deletions
 
 ## License
 
-MIT
+MIT — built by [yas.chat](https://yas.chat)

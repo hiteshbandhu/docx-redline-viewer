@@ -10,7 +10,7 @@
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-docx-viewer": "link:../"
+    "@yas/docx-redline-viewer": "link:../"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

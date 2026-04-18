@@ -1,7 +1,7 @@
 {
-  "name": "react-docx-viewer",
+  "name": "@yas/docx-redline-viewer",
   "version": "0.1.0",
-  "description": "React component for rendering DOCX files with tracked changes support",
+  "description": "React component for rendering DOCX files with tracked changes (redlines) support — built for legal tech",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
